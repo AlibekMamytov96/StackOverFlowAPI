@@ -141,6 +141,10 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 2
 }
 
+TWILIO_ACCOUNT_SID = config('TWILIO_ACCOUNT_SID')
+TWILIO_AUTH_TOKEN = config('TWILIO_AUTH_TOKEN')
+TWILIO_SENDER_PHONE = config('TWILIO_SENDER_PHONE')
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 

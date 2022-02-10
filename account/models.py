@@ -13,6 +13,7 @@ class CustomUserManager(BaseUserManager):
             raise ValueError('Phone number must be provided')
         user = self.model(phone_number=phone_number, **extra_fields)
         user.set_password(password)
+        user.create_activation_code()
         user.save(using=self._db)
         return user
 
@@ -21,7 +22,6 @@ class CustomUserManager(BaseUserManager):
             raise ValueError('Phone number must be provided')
         user = self.model(phone_number=phone_number, **extra_fields)
         user.set_password(password)
-        user.create_activation_code()
         user.is_staff = True
         user.is_superuser = True
         user.is_active = True
@@ -38,7 +38,7 @@ class CustomUser(AbstractUser):
     objects = CustomUserManager()
 
     USERNAME_FIELD = 'phone_number'
-    REQUIRED_FIELDS = ['username', ]
+    REQUIRED_FIELDS = ['username']
 
     def create_activation_code(self):
         code = get_random_string(length=6, allowed_chars='0123456789')
