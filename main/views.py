@@ -5,12 +5,13 @@ from django.shortcuts import render
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.generics import *
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from main.models import *
 from .serializers import *
-
+from .permissions import IsAuthorPermission
 
 #
 # class ProblemaListView(ListAPIView):
@@ -44,12 +45,25 @@ from .serializers import *
 #     serializer_class = ProblemaSerializer
 
 
-class ProblemaViewSet(ModelViewSet):
+class PermissionMixin:
+    def get_permissions(self):
+        if self.action in ['update', 'partial-update', 'destroy']:
+            permissions = [IsAuthorPermission]
+        elif self.action == 'create':
+            permissions = [IsAuthenticated]
+        else:
+            permissions = []
+        return [permission() for permission in permissions]
+
+
+class ProblemaViewSet(PermissionMixin, ModelViewSet):
     queryset = Problema.objects.all()
     serializer_class = ProblemaSerializer
 
     def get_serializer_context(self):
-        return {'action': self.action}
+        context = super().get_serializer_context()
+        context['action'] = self.action
+        return context
 
     @action(detail=False, methods=['get'])
     def search(self, request):
@@ -60,14 +74,30 @@ class ProblemaViewSet(ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class ReplyViewSet(ModelViewSet):
+class ReplyViewSet(PermissionMixin, ModelViewSet):
     queryset = Reply.objects.all()
     serializer_class = ReplySerializer
 
     def get_serializer_context(self):
-        return {'action': self.action}
+        context = super().get_serializer_context()
+        context['action'] = self.action
+        return context
+
+    @action(detail=True, methods=['get'])
+    def like(self, request, pk):
+        user = request.user
+        reply = get_object_or_404(Reply, pk=pk)
+        if user.is_authenticated:
+            if user in reply.likes.all():
+                reply.likes.remove(user)
+                message = 'Unliked!'
+            else:
+                reply.likes.add(user)
+                message = 'Liked!'
+        context = {'status': message}
+        return Response(context, status=status.HTTP_200_OK)
 
 
-class CommentViewSet(ModelViewSet):
+class CommentViewSet(PermissionMixin, ModelViewSet):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer

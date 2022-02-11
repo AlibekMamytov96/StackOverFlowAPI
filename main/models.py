@@ -27,6 +27,7 @@ class Reply(models.Model):
     image = models.ImageField(upload_to='reply_img')
     author = models.ForeignKey(CustomUser, on_delete=models.DO_NOTHING, related_name='replies')
     created = models.DateTimeField(auto_now_add=True)
+    likes = models.ManyToManyField(CustomUser, related_name='likers', blank=True)
 
     def __str__(self):
         return f'{self.body[:11]}...'
